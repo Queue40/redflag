@@ -1,54 +1,45 @@
-function resizeAndCompress(file, maxWidth, maxHeight, callback) {
-    const img = new Image();
-    const reader = new FileReader();
+const API_KEY = "9864e33f1d19ea6b4bc1c1e40e42e2cf";
 
-    reader.onload = e => {
-        img.src = e.target.result;
-    };
-
-    img.onload = () => {
-        let width = img.width;
-        let height = img.height;
-
-        // Resize if larger than max
-        if (width > maxWidth) {
-            height *= maxWidth / width;
-            width = maxWidth;
-        }
-        if (height > maxHeight) {
-            width *= maxHeight / height;
-            height = maxHeight;
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Compress to JPEG (quality 0.7) or WebP
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        callback(dataUrl);
-    };
-
-    reader.readAsDataURL(file);
-}
-
-function searchImage() {
+function uploadAndSearch() {
     const fileInput = document.getElementById('queryImage');
+    const statusDiv = document.getElementById('status');
+
     if (!fileInput.files.length) {
         alert("Please upload an image!");
         return;
     }
 
     const file = fileInput.files[0];
-
-    resizeAndCompress(file, 1024, 1024, (base64Image) => {
-        const encoded = encodeURIComponent(base64Image);
-
-        // Open reverse image search engines
-        window.open(`https://www.google.com/searchbyimage?image_url=${encoded}`, "_blank");
-        window.open(`https://www.bing.com/images/search?q=imgurl:${encoded}&view=detailv2&iss=sbi`, "_blank");
-        window.open(`https://yandex.com/images/search?rpt=imageview&url=${encoded}`, "_blank");
-    });
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64 = e.target.result.split(',')[1]; // Remove "data:image/...;base64,"
+        
+        statusDiv.innerText = "Uploading to ImgBB...";
+        
+        fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
+            method: "POST",
+            body: new URLSearchParams({
+                "image": base64
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                const url = data.data.url;
+                statusDiv.innerHTML = `Uploaded! <a href="${url}" target="_blank">View Image</a>`;
+                
+                // Open reverse image search
+                window.open(`https://www.google.com/searchbyimage?image_url=${encodeURIComponent(url)}`, "_blank");
+                window.open(`https://www.bing.com/images/search?q=imgurl:${encodeURIComponent(url)}&view=detailv2&iss=sbi`, "_blank");
+                window.open(`https://yandex.com/images/search?rpt=imageview&url=${encodeURIComponent(url)}`, "_blank");
+            } else {
+                statusDiv.innerText = "Upload failed.";
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            statusDiv.innerText = "Error uploading image.";
+        });
+    };
+    reader.readAsDataURL(file);
 }
