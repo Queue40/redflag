@@ -6,14 +6,15 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Reverse Image Search</h1>
+<h1>Reverse Image Search (ImgBB)</h1>
 
 <div class="upload-form">
-    <h2>Upload Image</h2>
     <input type="file" id="queryImage" accept="image/*">
     <br>
-    <button onclick="searchImage()">Search</button>
+    <button onclick="uploadAndSearch()">Search</button>
 </div>
+
+<div id="status"></div>
 
 <script src="scripts.js"></script>
 </body>
