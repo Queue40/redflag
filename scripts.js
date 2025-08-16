@@ -1,34 +1,54 @@
+function resizeAndCompress(file, maxWidth, maxHeight, callback) {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = e => {
+        img.src = e.target.result;
+    };
+
+    img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        // Resize if larger than max
+        if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+        }
+        if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Compress to JPEG (quality 0.7) or WebP
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        callback(dataUrl);
+    };
+
+    reader.readAsDataURL(file);
+}
+
 function searchImage() {
     const fileInput = document.getElementById('queryImage');
-
     if (!fileInput.files.length) {
         alert("Please upload an image!");
         return;
     }
 
     const file = fileInput.files[0];
-    const reader = new FileReader();
 
-    reader.onload = function(e) {
-        const imageData = e.target.result;
+    resizeAndCompress(file, 1024, 1024, (base64Image) => {
+        const encoded = encodeURIComponent(base64Image);
 
-        // Create a temporary form to upload image to Google, Bing, Yandex
-        // Since GitHub Pages is static, we can only use their "search by image" URL schemes
-
-        // 1️⃣ Google Reverse Image Search
-        const googleURL = "https://www.google.com/searchbyimage?image_url=" + encodeURIComponent(imageData);
-
-        // 2️⃣ Bing Visual Search
-        const bingURL = "https://www.bing.com/images/search?q=imgurl:" + encodeURIComponent(imageData) + "&view=detailv2&iss=sbi";
-
-        // 3️⃣ Yandex Reverse Image Search
-        const yandexURL = "https://yandex.com/images/search?rpt=imageview&url=" + encodeURIComponent(imageData);
-
-        // Open all in new tabs
-        window.open(googleURL, "_blank");
-        window.open(bingURL, "_blank");
-        window.open(yandexURL, "_blank");
-    }
-
-    reader.readAsDataURL(file);
+        // Open reverse image search engines
+        window.open(`https://www.google.com/searchbyimage?image_url=${encoded}`, "_blank");
+        window.open(`https://www.bing.com/images/search?q=imgurl:${encoded}&view=detailv2&iss=sbi`, "_blank");
+        window.open(`https://yandex.com/images/search?rpt=imageview&url=${encoded}`, "_blank");
+    });
 }
