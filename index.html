@@ -1,74 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Reverse Image Search</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .upload-form {
-            margin-bottom: 30px;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-        .results {
-            margin-top: 20px;
-        }
-        .result-item {
-            margin: 15px 0;
-            padding: 10px;
-            border: 1px solid #eee;
-            display: flex;
-            align-items: center;
-        }
-        .result-item img {
-            margin-right: 20px;
-        }
-        .error {
-            color: red;
-            margin: 10px 0;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Reverse Image Search Prototype</title>
+<style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    .upload-form { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9; }
+    button { margin-top: 10px; padding: 10px 15px; }
+</style>
 </head>
 <body>
-    <h1>Reverse Image Search</h1>
-    
-    <div class="upload-form">
-        <h2>Upload Image</h2>
-        <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="query_image" accept="image/*" required>
-            <button type="submit">Search</button>
-        </form>
-    </div>
+<h1>Reverse Image Search Prototype</h1>
 
-    {% if error %}
-        <div class="error">
-            <strong>Error:</strong> {{ error }}
-        </div>
-    {% endif %}
+<div class="upload-form">
+    <h2>Upload Image</h2>
+    <input type="file" id="queryImage" accept="image/*">
+    <br>
+    <button onclick="searchImage()">Search on Multiple Engines</button>
+</div>
 
-    {% if results is not none %}
-        <div class="results">
-            {% if results %}
-                <h2>Similar Images Found ({{ results|length }}):</h2>
-                {% for path, score in results %}
-                    <div class="result-item">
-                        <img src="{{ path }}" width="200px">
-                        <div>
-                            <p>File: {{ path.split('/')[-1] }}</p>
-                            <p>Similarity score: {{ score }} (lower is better)</p>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p>No similar images found in the database.</p>
-            {% endif %}
-        </div>
-    {% endif %}
+<script src="scripts.js"></script>
 </body>
 </html>
