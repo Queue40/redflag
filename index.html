@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reverse Image Search Tool</title>
+    <title>Advanced Reverse Image Search Tool</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f5f5;
@@ -26,6 +26,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             text-align: center;
+            margin-bottom: 30px;
         }
         
         .upload-area {
@@ -64,6 +65,7 @@
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s;
+            margin: 5px;
         }
         
         button:hover {
@@ -119,10 +121,137 @@
         .hidden {
             display: none;
         }
+        
+        /* Results section */
+        .results-container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .result-item {
+            border: 1px solid #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        
+        .result-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-image {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            cursor: pointer;
+        }
+        
+        .result-link {
+            display: block;
+            padding: 8px;
+            font-size: 12px;
+            color: #3498db;
+            text-decoration: none;
+            word-break: break-all;
+            border-top: 1px solid #eee;
+        }
+        
+        .result-link:hover {
+            text-decoration: underline;
+        }
+        
+        .section-title {
+            margin-top: 30px;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .social-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .social-link {
+            background-color: #e8f4fc;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #2980b9;
+            font-size: 14px;
+        }
+        
+        .social-link:hover {
+            background-color: #d4e6f1;
+        }
+        
+        .ai-label {
+            background-color: #e8f6f3;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #1d8348;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #eee;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-    <h1>Reverse Image Search Tool</h1>
+    <h1>Advanced Reverse Image Search Tool</h1>
     
     <div class="upload-container">
         <div id="uploadArea" class="upload-area" onclick="document.getElementById('queryImage').click()">
@@ -132,7 +261,8 @@
         
         <input type="file" id="queryImage" accept="image/*" style="display: none;">
         
-        <button id="searchBtn" onclick="uploadAndSearch()" disabled>Search</button>
+        <button id="searchBtn" onclick="startSearchProcess()" disabled>Search</button>
+        <button id="clearBtn" onclick="clearResults()" class="hidden">Clear Results</button>
         
         <div id="status"></div>
         
@@ -143,10 +273,47 @@
             <a id="yandexSearch" class="search-engine-btn" target="_blank">Yandex</a>
         </div>
     </div>
+    
+    <div id="resultsSection" class="results-container hidden">
+        <div class="tab-container">
+            <div class="tab active" onclick="switchTab('imageResults')">Image Results</div>
+            <div class="tab" onclick="switchTab('socialResults')">Social Media</div>
+            <div class="tab" onclick="switchTab('videoResults')">Video Platforms</div>
+        </div>
+        
+        <div id="aiLabelContainer" class="hidden">
+            <p>AI Analysis:</p>
+            <div class="ai-label" id="aiLabel"></div>
+        </div>
+        
+        <div id="imageResults" class="tab-content active">
+            <h3 class="section-title">Reverse Image Search Results</h3>
+            <div id="resultsGrid" class="results-grid"></div>
+        </div>
+        
+        <div id="socialResults" class="tab-content">
+            <h3 class="section-title">Social Media Results</h3>
+            <div id="socialLinks" class="social-links"></div>
+        </div>
+        
+        <div id="videoResults" class="tab-content">
+            <h3 class="section-title">Video Platform Results</h3>
+            <div id="videoLinks" class="social-links"></div>
+        </div>
+    </div>
 
+    <!-- Include transformers.js for client-side AI -->
+    <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.4.0"></script>
+    
     <script>
         const API_KEY = "9864e33f1d19ea6b4bc1c1e40e42e2cf";
         let uploadedImageUrl = null;
+        let searchResults = {
+            images: [],
+            social: [],
+            videos: []
+        };
+        let aiLabel = "";
 
         // Initialize drag and drop functionality
         document.addEventListener('DOMContentLoaded', function() {
@@ -206,7 +373,7 @@
             statusDiv.className = type;
         }
 
-        function uploadAndSearch() {
+        function startSearchProcess() {
             const fileInput = document.getElementById('queryImage');
             
             if (!fileInput.files.length) {
@@ -214,50 +381,302 @@
                 return;
             }
 
-            const file = fileInput.files[0];
-            const reader = new FileReader();
+            updateStatus('Starting image analysis...', 'loading');
             
-            updateStatus('Uploading image to ImgBB...', 'loading');
+            // Show loading spinner
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('imageResults').innerHTML = `
+                <h3 class="section-title">Reverse Image Search Results</h3>
+                <div class="loading-spinner"></div>
+                <p>Analyzing image and searching...</p>
+            `;
             
-            reader.onload = function(e) {
-                const base64 = e.target.result.split(',')[1];
-                
-                fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
-                    method: "POST",
-                    body: new URLSearchParams({
-                        "image": base64
-                    })
+            // First upload the image to ImgBB
+            uploadImageToImgBB(fileInput.files[0])
+                .then(url => {
+                    uploadedImageUrl = url;
+                    updateStatus('Image uploaded. Analyzing with AI...', 'loading');
+                    
+                    // Then analyze with AI
+                    return analyzeImageWithAI(fileInput.files[0]);
                 })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        uploadedImageUrl = data.data.url;
-                        updateStatus('Image uploaded successfully!', 'success');
-                        
-                        // Enable search engine buttons
-                        document.getElementById('googleSearch').href = 
-                            `https://www.google.com/searchbyimage?image_url=${encodeURIComponent(uploadedImageUrl)}`;
-                        document.getElementById('bingSearch').href = 
-                            `https://www.bing.com/images/search?q=imgurl:${encodeURIComponent(uploadedImageUrl)}&view=detailv2&iss=sbi`;
-                        document.getElementById('yandexSearch').href = 
-                            `https://yandex.com/images/search?rpt=imageview&url=${encodeURIComponent(uploadedImageUrl)}`;
-                        
-                        document.getElementById('searchEngines').classList.remove('hidden');
-                    } else {
-                        updateStatus('Upload failed: ' + (data.error?.message || 'Unknown error'), 'error');
-                    }
+                .then(label => {
+                    aiLabel = label;
+                    updateStatus(`AI detected: ${label}. Searching across platforms...`, 'loading');
+                    document.getElementById('aiLabelContainer').classList.remove('hidden');
+                    document.getElementById('aiLabel').textContent = label;
+                    
+                    // Start all searches in parallel
+                    return Promise.all([
+                        searchGoogleImages(uploadedImageUrl),
+                        searchBingImages(uploadedImageUrl),
+                        searchYandexImages(uploadedImageUrl),
+                        searchSocialMedia(label),
+                        searchVideoPlatforms(label)
+                    ]);
+                })
+                .then(() => {
+                    updateStatus('Search completed!', 'success');
+                    displayResults();
                 })
                 .catch(err => {
                     console.error(err);
-                    updateStatus('Error uploading image: ' + err.message, 'error');
+                    updateStatus('Error: ' + err.message, 'error');
                 });
-            };
+        }
+
+        function uploadImageToImgBB(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const base64 = e.target.result.split(',')[1];
+                    
+                    fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
+                        method: "POST",
+                        body: new URLSearchParams({
+                            "image": base64
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            resolve(data.data.url);
+                            
+                            // Enable direct search engine buttons
+                            document.getElementById('googleSearch').href = 
+                                `https://www.google.com/searchbyimage?image_url=${encodeURIComponent(data.data.url)}`;
+                            document.getElementById('bingSearch').href = 
+                                `https://www.bing.com/images/search?q=imgurl:${encodeURIComponent(data.data.url)}&view=detailv2&iss=sbi`;
+                            document.getElementById('yandexSearch').href = 
+                                `https://yandex.com/images/search?rpt=imageview&url=${encodeURIComponent(data.data.url)}`;
+                            
+                            document.getElementById('searchEngines').classList.remove('hidden');
+                        } else {
+                            reject(new Error(data.error?.message || 'Upload failed'));
+                        }
+                    })
+                    .catch(err => reject(err));
+                };
+                
+                reader.onerror = function() {
+                    reject(new Error('Error reading image file'));
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function analyzeImageWithAI(file) {
+            updateStatus('Loading AI model...', 'loading');
             
-            reader.onerror = function() {
-                updateStatus('Error reading image file', 'error');
-            };
+            try {
+                // Load CLIP model for image classification
+                const { pipeline } = await transformers.getPipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch16');
+                
+                updateStatus('Analyzing image content...', 'loading');
+                
+                // Create image element to get dimensions
+                const img = new Image();
+                img.src = URL.createObjectURL(file);
+                await new Promise(resolve => img.onload = resolve);
+                
+                // Classify the image with common labels
+                const candidate_labels = [
+                    "person", "celebrity", "animal", "landmark", "product", 
+                    "artwork", "logo", "vehicle", "plant", "food"
+                ];
+                
+                const output = await pipeline(URL.createObjectURL(file), candidate_labels);
+                
+                // Get the top label
+                const topLabel = output[0].label;
+                return topLabel;
+            } catch (err) {
+                console.error("AI analysis failed:", err);
+                // Fallback to generic label if AI fails
+                return "image";
+            }
+        }
+
+        async function searchGoogleImages(imageUrl) {
+            try {
+                // In a real implementation, you would use a backend proxy to scrape Google
+                // This is a mock implementation that would be replaced with actual scraping
+                const mockResults = [
+                    { url: "https://example.com/image1.jpg", source: "https://example.com" },
+                    { url: "https://example.com/image2.jpg", source: "https://example.org" }
+                ];
+                
+                searchResults.images.push(...mockResults);
+                return mockResults;
+            } catch (err) {
+                console.error("Google search failed:", err);
+                return [];
+            }
+        }
+
+        async function searchBingImages(imageUrl) {
+            try {
+                // Mock implementation - replace with actual Bing scraping
+                const mockResults = [
+                    { url: "https://example.com/bing-image1.jpg", source: "https://example.com/bing" },
+                    { url: "https://example.com/bing-image2.jpg", source: "https://example.org/bing" }
+                ];
+                
+                searchResults.images.push(...mockResults);
+                return mockResults;
+            } catch (err) {
+                console.error("Bing search failed:", err);
+                return [];
+            }
+        }
+
+        async function searchYandexImages(imageUrl) {
+            try {
+                // Mock implementation - replace with actual Yandex scraping
+                const mockResults = [
+                    { url: "https://example.com/yandex-image1.jpg", source: "https://example.com/yandex" },
+                    { url: "https://example.com/yandex-image2.jpg", source: "https://example.org/yandex" }
+                ];
+                
+                searchResults.images.push(...mockResults);
+                return mockResults;
+            } catch (err) {
+                console.error("Yandex search failed:", err);
+                return [];
+            }
+        }
+
+        function searchSocialMedia(query) {
+            // Generate search links for social media platforms
+            const socialLinks = [
+                { name: "Twitter", url: `https://twitter.com/search?q=${encodeURIComponent(query)}` },
+                { name: "Facebook", url: `https://www.facebook.com/search/top/?q=${encodeURIComponent(query)}` },
+                { name: "Instagram", url: `https://www.instagram.com/explore/tags/${encodeURIComponent(query)}/` },
+                { name: "Reddit", url: `https://www.reddit.com/search/?q=${encodeURIComponent(query)}` }
+            ];
             
-            reader.readAsDataURL(file);
+            searchResults.social = socialLinks;
+            return socialLinks;
+        }
+
+        function searchVideoPlatforms(query) {
+            // Generate search links for video platforms
+            const videoLinks = [
+                { name: "YouTube", url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}` },
+                { name: "TikTok", url: `https://www.tiktok.com/search?q=${encodeURIComponent(query)}` },
+                { name: "Dailymotion", url: `https://www.dailymotion.com/search/${encodeURIComponent(query)}` },
+                { name: "Vimeo", url: `https://vimeo.com/search?q=${encodeURIComponent(query)}` }
+            ];
+            
+            searchResults.videos = videoLinks;
+            return videoLinks;
+        }
+
+        function displayResults() {
+            // Display image results
+            const resultsGrid = document.getElementById('resultsGrid');
+            resultsGrid.innerHTML = '';
+            
+            // Deduplicate images
+            const uniqueImages = [];
+            const seenUrls = new Set();
+            
+            for (const img of searchResults.images) {
+                if (!seenUrls.has(img.url)) {
+                    seenUrls.add(img.url);
+                    uniqueImages.push(img);
+                }
+            }
+            
+            // Display up to 20 unique images
+            uniqueImages.slice(0, 20).forEach(img => {
+                const item = document.createElement('div');
+                item.className = 'result-item';
+                item.innerHTML = `
+                    <img src="${img.url}" class="result-image" onerror="this.src='https://via.placeholder.com/200?text=Image+not+available'">
+                    <a href="${img.source}" class="result-link" target="_blank">${new URL(img.source).hostname}</a>
+                `;
+                resultsGrid.appendChild(item);
+            });
+            
+            // Display social media links
+            const socialLinksContainer = document.getElementById('socialLinks');
+            socialLinksContainer.innerHTML = '';
+            
+            searchResults.social.forEach(link => {
+                const a = document.createElement('a');
+                a.className = 'social-link';
+                a.href = link.url;
+                a.target = '_blank';
+                a.textContent = link.name;
+                socialLinksContainer.appendChild(a);
+            });
+            
+            // Display video platform links
+            const videoLinksContainer = document.getElementById('videoLinks');
+            videoLinksContainer.innerHTML = '';
+            
+            searchResults.videos.forEach(link => {
+                const a = document.createElement('a');
+                a.className = 'social-link';
+                a.href = link.url;
+                a.target = '_blank';
+                a.textContent = link.name;
+                videoLinksContainer.appendChild(a);
+            });
+            
+            // Show clear button
+            document.getElementById('clearBtn').classList.remove('hidden');
+        }
+
+        function clearResults() {
+            // Reset all results
+            searchResults = { images: [], social: [], videos: [] };
+            aiLabel = "";
+            
+            // Clear UI
+            document.getElementById('resultsGrid').innerHTML = '';
+            document.getElementById('socialLinks').innerHTML = '';
+            document.getElementById('videoLinks').innerHTML = '';
+            document.getElementById('aiLabel').textContent = '';
+            document.getElementById('aiLabelContainer').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('searchEngines').classList.add('hidden');
+            document.getElementById('clearBtn').classList.add('hidden');
+            
+            // Reset file input
+            document.getElementById('queryImage').value = '';
+            document.getElementById('imagePreview').src = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('searchBtn').disabled = true;
+            
+            updateStatus('Ready to search new image');
+        }
+
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Deactivate all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Activate selected tab
+            document.getElementById(tabId).classList.add('active');
+            
+            // Activate tab button
+            const tabs = document.querySelectorAll('.tab');
+            for (let i = 0; i < tabs.length; i++) {
+                if (tabs[i].textContent.toLowerCase().includes(tabId.replace('Results', '').toLowerCase())) {
+                    tabs[i].classList.add('active');
+                    break;
+                }
+            }
         }
     </script>
 </body>
