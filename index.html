@@ -248,10 +248,31 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: #ecf0f1;
+            border-radius: 3px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: #3498db;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .performance-info {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1> Reverse Image Search Tool #2 </h1>
+    <h1>Optimized Reverse Image Search Tool</h1>
     
     <div class="upload-container">
         <div id="uploadArea" class="upload-area" onclick="document.getElementById('queryImage').click()">
@@ -264,7 +285,13 @@
         <button id="searchBtn" onclick="startSearchProcess()" disabled>Search</button>
         <button id="clearBtn" onclick="clearResults()" class="hidden">Clear Results</button>
         
-        <div id="status"></div>
+        <div id="status">Select an image to begin search</div>
+        
+        <div class="progress-bar">
+            <div id="progress" class="progress"></div>
+        </div>
+        
+        <div id="performanceInfo" class="performance-info"></div>
         
         <div id="searchEngines" class="search-engines hidden">
             <p>Search on:</p>
@@ -311,6 +338,7 @@
             videos: []
         };
         let aiLabel = "";
+        let startTime;
 
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
@@ -374,7 +402,22 @@
             }
         }
 
+        function updateProgress(percentage) {
+            const progressBar = document.getElementById('progress');
+            if (progressBar) {
+                progressBar.style.width = percentage + '%';
+            }
+        }
+
+        function updatePerformanceInfo(message) {
+            const perfInfo = document.getElementById('performanceInfo');
+            if (perfInfo) {
+                perfInfo.textContent = message;
+            }
+        }
+
         function startSearchProcess() {
+            startTime = performance.now();
             const fileInput = document.getElementById('queryImage');
             if (!fileInput.files || !fileInput.files.length) {
                 updateStatus('Please select an image first!', 'error');
@@ -382,6 +425,7 @@
             }
 
             updateStatus('Starting image analysis...', 'loading');
+            updateProgress(10);
             
             // Show loading state
             const resultsSection = document.getElementById('resultsSection');
@@ -402,6 +446,8 @@
                 .then(label => {
                     aiLabel = label;
                     updateStatus(`AI detected: ${label}. Searching across platforms...`, 'loading');
+                    updateProgress(40);
+                    
                     const aiLabelContainer = document.getElementById('aiLabelContainer');
                     if (aiLabelContainer) aiLabelContainer.classList.remove('hidden');
                     const aiLabelElement = document.getElementById('aiLabel');
@@ -413,6 +459,7 @@
                 .then(url => {
                     uploadedImageUrl = url;
                     updateStatus('Image uploaded. Searching for matches...', 'loading');
+                    updateProgress(60);
                     
                     // Enable direct search engine buttons
                     const googleSearch = document.getElementById('googleSearch');
@@ -443,12 +490,17 @@
                     ]);
                 })
                 .then(() => {
-                    updateStatus('Search completed!', 'success');
+                    const endTime = performance.now();
+                    const searchTime = ((endTime - startTime) / 1000).toFixed(2);
+                    updateStatus(`Search completed in ${searchTime} seconds!`, 'success');
+                    updateProgress(100);
+                    updatePerformanceInfo(`Total search time: ${searchTime} seconds`);
                     displayResults();
                 })
                 .catch(err => {
                     console.error(err);
                     updateStatus('Error: ' + err.message, 'error');
+                    updateProgress(0);
                 });
         }
 
@@ -461,12 +513,12 @@
                 const reader = new FileReader();
                 
                 reader.onload = function(e) {
-                    // Simulate API call delay
+                    // Simulate API call delay (reduced from 1000ms to 300ms)
                     setTimeout(() => {
                         // Create a blob URL for the demo
                         const blobUrl = URL.createObjectURL(file);
                         resolve(blobUrl);
-                    }, 1000);
+                    }, 300);
                 };
                 
                 reader.onerror = function() {
@@ -489,12 +541,12 @@
                 img.src = URL.createObjectURL(file);
                 await new Promise(resolve => {
                     img.onload = resolve;
-                    // Timeout in case the image fails to load
-                    setTimeout(resolve, 1000);
+                    // Timeout in case the image fails to load (reduced from 1000ms to 500ms)
+                    setTimeout(resolve, 500);
                 });
                 
-                // Simulate AI processing time
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                // Simulate AI processing time (reduced from 1500ms to 500ms)
+                await new Promise(resolve => setTimeout(resolve, 500));
                 
                 // For demo purposes, return a mock label based on image dimensions
                 // In a real implementation, you would use actual AI analysis
@@ -522,8 +574,8 @@
                 // This is a mock implementation that simulates search results
                 updateStatus('Searching Google Images...', 'loading');
                 
-                // Simulate API call delay
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // Simulate API call delay (reduced from 2000ms to 800ms)
+                await new Promise(resolve => setTimeout(resolve, 800));
                 
                 // Generate mock results for demonstration
                 const mockResults = [
@@ -558,7 +610,8 @@
                 // Mock implementation - simulates Bing search
                 updateStatus('Searching Bing Images...', 'loading');
                 
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                // Reduced from 1500ms to 600ms
+                await new Promise(resolve => setTimeout(resolve, 600));
                 
                 const mockResults = [
                     { 
@@ -584,7 +637,8 @@
                 // Mock implementation - simulates Yandex search
                 updateStatus('Searching Yandex Images...', 'loading');
                 
-                await new Promise(resolve => setTimeout(resolve, 1800));
+                // Reduced from 1800ms to 700ms
+                await new Promise(resolve => setTimeout(resolve, 700));
                 
                 const mockResults = [
                     { 
@@ -738,7 +792,11 @@
             const searchBtn = document.getElementById('searchBtn');
             if (searchBtn) searchBtn.disabled = true;
             
-            updateStatus('Ready to search new image');
+            // Reset progress bar
+            updateProgress(0);
+            updatePerformanceInfo('');
+            
+            updateStatus('Select an image to begin search');
         }
 
         function switchTab(tabId) {
