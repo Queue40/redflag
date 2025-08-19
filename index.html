@@ -368,8 +368,10 @@
 
         function updateStatus(message, type = '') {
             const statusDiv = document.getElementById('status');
-            statusDiv.innerText = message;
-            statusDiv.className = type;
+            if (statusDiv) {
+                statusDiv.innerText = message;
+                statusDiv.className = type;
+            }
         }
 
         function startSearchProcess() {
@@ -382,20 +384,28 @@
             updateStatus('Starting image analysis...', 'loading');
             
             // Show loading state
-            document.getElementById('resultsSection').classList.remove('hidden');
-            document.getElementById('imageResults').innerHTML = `
-                <h3 class="section-title">Reverse Image Search Results</h3>
-                <div class="loading-spinner"></div>
-                <p>Analyzing image and searching...</p>
-            `;
+            const resultsSection = document.getElementById('resultsSection');
+            if (resultsSection) {
+                resultsSection.classList.remove('hidden');
+                const imageResults = document.getElementById('imageResults');
+                if (imageResults) {
+                    imageResults.innerHTML = `
+                        <h3 class="section-title">Reverse Image Search Results</h3>
+                        <div class="loading-spinner"></div>
+                        <p>Analyzing image and searching...</p>
+                    `;
+                }
+            }
             
             // First analyze with AI
             analyzeImageWithAI(fileInput.files[0])
                 .then(label => {
                     aiLabel = label;
                     updateStatus(`AI detected: ${label}. Searching across platforms...`, 'loading');
-                    document.getElementById('aiLabelContainer').classList.remove('hidden');
-                    document.getElementById('aiLabel').textContent = label;
+                    const aiLabelContainer = document.getElementById('aiLabelContainer');
+                    if (aiLabelContainer) aiLabelContainer.classList.remove('hidden');
+                    const aiLabelElement = document.getElementById('aiLabel');
+                    if (aiLabelElement) aiLabelElement.textContent = label;
                     
                     // Then upload the image to ImgBB
                     return uploadImageToImgBB(fileInput.files[0]);
@@ -405,14 +415,23 @@
                     updateStatus('Image uploaded. Searching for matches...', 'loading');
                     
                     // Enable direct search engine buttons
-                    document.getElementById('googleSearch').href = 
-                        `https://www.google.com/searchbyimage?image_url=${encodeURIComponent(uploadedImageUrl)}`;
-                    document.getElementById('bingSearch').href = 
-                        `https://www.bing.com/images/search?q=imgurl:${encodeURIComponent(uploadedImageUrl)}&view=detailv2&iss=sbi`;
-                    document.getElementById('yandexSearch').href = 
-                        `https://yandex.com/images/search?rpt=imageview&url=${encodeURIComponent(uploadedImageUrl)}`;
+                    const googleSearch = document.getElementById('googleSearch');
+                    const bingSearch = document.getElementById('bingSearch');
+                    const yandexSearch = document.getElementById('yandexSearch');
+                    const searchEngines = document.getElementById('searchEngines');
                     
-                    document.getElementById('searchEngines').classList.remove('hidden');
+                    if (googleSearch) {
+                        googleSearch.href = `https://www.google.com/searchbyimage?image_url=${encodeURIComponent(uploadedImageUrl)}`;
+                    }
+                    if (bingSearch) {
+                        bingSearch.href = `https://www.bing.com/images/search?q=imgurl:${encodeURIComponent(uploadedImageUrl)}&view=detailv2&iss=sbi`;
+                    }
+                    if (yandexSearch) {
+                        yandexSearch.href = `https://yandex.com/images/search?rpt=imageview&url=${encodeURIComponent(uploadedImageUrl)}`;
+                    }
+                    if (searchEngines) {
+                        searchEngines.classList.remove('hidden');
+                    }
                     
                     // Start all searches in parallel
                     return Promise.all([
@@ -615,58 +634,65 @@
         function displayResults() {
             // Display image results
             const resultsGrid = document.getElementById('resultsGrid');
-            resultsGrid.innerHTML = '';
-            
-            // Deduplicate images
-            const uniqueImages = [];
-            const seenUrls = new Set();
-            
-            for (const img of searchResults.images) {
-                if (!seenUrls.has(img.url)) {
-                    seenUrls.add(img.url);
-                    uniqueImages.push(img);
+            if (resultsGrid) {
+                resultsGrid.innerHTML = '';
+                
+                // Deduplicate images
+                const uniqueImages = [];
+                const seenUrls = new Set();
+                
+                for (const img of searchResults.images) {
+                    if (!seenUrls.has(img.url)) {
+                        seenUrls.add(img.url);
+                        uniqueImages.push(img);
+                    }
                 }
+                
+                // Display up to 20 unique images
+                uniqueImages.slice(0, 20).forEach(img => {
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    item.innerHTML = `
+                        <img src="${img.url}" class="result-image" onerror="this.src='https://via.placeholder.com/200?text=Image+not+available'">
+                        <a href="${img.source}" class="result-link" target="_blank">${new URL(img.source).hostname}</a>
+                    `;
+                    resultsGrid.appendChild(item);
+                });
             }
-            
-            // Display up to 20 unique images
-            uniqueImages.slice(0, 20).forEach(img => {
-                const item = document.createElement('div');
-                item.className = 'result-item';
-                item.innerHTML = `
-                    <img src="${img.url}" class="result-image" onerror="this.src='https://via.placeholder.com/200?text=Image+not+available'">
-                    <a href="${img.source}" class="result-link" target="_blank">${new URL(img.source).hostname}</a>
-                `;
-                resultsGrid.appendChild(item);
-            });
             
             // Display social media links
             const socialLinks = document.getElementById('socialLinks');
-            socialLinks.innerHTML = '';
-            
-            searchResults.social.forEach(link => {
-                const a = document.createElement('a');
-                a.className = 'social-link';
-                a.href = link.url;
-                a.target = '_blank';
-                a.textContent = link.name;
-                socialLinks.appendChild(a);
-            });
+            if (socialLinks) {
+                socialLinks.innerHTML = '';
+                
+                searchResults.social.forEach(link => {
+                    const a = document.createElement('a');
+                    a.className = 'social-link';
+                    a.href = link.url;
+                    a.target = '_blank';
+                    a.textContent = link.name;
+                    socialLinks.appendChild(a);
+                });
+            }
             
             // Display video platform links
             const videoLinks = document.getElementById('videoLinks');
-            videoLinks.innerHTML = '';
-            
-            searchResults.videos.forEach(link => {
-                const a = document.createElement('a');
-                a.className = 'social-link';
-                a.href = link.url;
-                a.target = '_blank';
-                a.textContent = link.name;
-                videoLinks.appendChild(a);
-            });
+            if (videoLinks) {
+                videoLinks.innerHTML = '';
+                
+                searchResults.videos.forEach(link => {
+                    const a = document.createElement('a');
+                    a.className = 'social-link';
+                    a.href = link.url;
+                    a.target = '_blank';
+                    a.textContent = link.name;
+                    videoLinks.appendChild(a);
+                });
+            }
             
             // Show clear button
-            document.getElementById('clearBtn').classList.remove('hidden');
+            const clearBtn = document.getElementById('clearBtn');
+            if (clearBtn) clearBtn.classList.remove('hidden');
         }
 
         function clearResults() {
@@ -675,23 +701,42 @@
             aiLabel = "";
             
             // Clear UI
-            document.getElementById('resultsGrid').innerHTML = '';
-            document.getElementById('socialLinks').innerHTML = '';
-            document.getElementById('videoLinks').innerHTML = '';
-            document.getElementById('aiLabel').textContent = '';
-            document.getElementById('aiLabelContainer').classList.add('hidden');
-            document.getElementById('resultsSection').classList.add('hidden');
-            document.getElementById('searchEngines').classList.add('hidden');
-            document.getElementById('clearBtn').classList.add('hidden');
+            const resultsGrid = document.getElementById('resultsGrid');
+            if (resultsGrid) resultsGrid.innerHTML = '';
+            
+            const socialLinks = document.getElementById('socialLinks');
+            if (socialLinks) socialLinks.innerHTML = '';
+            
+            const videoLinks = document.getElementById('videoLinks');
+            if (videoLinks) videoLinks.innerHTML = '';
+            
+            const aiLabelElement = document.getElementById('aiLabel');
+            if (aiLabelElement) aiLabelElement.textContent = '';
+            
+            const aiLabelContainer = document.getElementById('aiLabelContainer');
+            if (aiLabelContainer) aiLabelContainer.classList.add('hidden');
+            
+            const resultsSection = document.getElementById('resultsSection');
+            if (resultsSection) resultsSection.classList.add('hidden');
+            
+            const searchEngines = document.getElementById('searchEngines');
+            if (searchEngines) searchEngines.classList.add('hidden');
+            
+            const clearBtn = document.getElementById('clearBtn');
+            if (clearBtn) clearBtn.classList.add('hidden');
             
             // Reset file input
-            document.getElementById('queryImage').value = '';
+            const fileInput = document.getElementById('queryImage');
+            if (fileInput) fileInput.value = '';
+            
             const preview = document.getElementById('imagePreview');
             if (preview) {
                 preview.src = '';
                 preview.style.display = 'none';
             }
-            document.getElementById('searchBtn').disabled = true;
+            
+            const searchBtn = document.getElementById('searchBtn');
+            if (searchBtn) searchBtn.disabled = true;
             
             updateStatus('Ready to search new image');
         }
